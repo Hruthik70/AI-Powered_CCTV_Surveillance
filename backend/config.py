@@ -23,7 +23,7 @@ class AppConfig:
     MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     DB_NAME: str = "cctv_surveillance"
     YOLO_MODEL: str = os.getenv("YOLO_MODEL", "yolov8s.pt")
-    CONFIDENCE_THRESHOLD: float = 0.22
+    CONFIDENCE_THRESHOLD: float = 0.05
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
@@ -51,9 +51,9 @@ class AppConfig:
             location="City Center Square",
             source="videos/Protest.mp4",
             crowd_threshold=25,
-            crowd_warning_threshold=15,
+            crowd_warning_threshold=12,
             alert_cooldown_seconds=10.0,
-            zones=[]  # No artificial dummy zones
+            zones=[]
         ),
         CameraConfig(
             camera_id="CAM-03",
@@ -63,6 +63,6 @@ class AppConfig:
             crowd_threshold=6,
             crowd_warning_threshold=4,
             alert_cooldown_seconds=10.0,
-            zones=[]  # Clean default without false voltage alarms
+            zones=[]
         )
     ]

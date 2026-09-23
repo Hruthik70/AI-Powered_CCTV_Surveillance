@@ -7,14 +7,6 @@ import torch
 
 logger = logging.getLogger("YOLODetector")
 
-# Optimize CPU multi-threading for PyTorch
-try:
-    if not torch.cuda.is_available():
-        num_cores = os.cpu_count() or 4
-        torch.set_num_threads(max(1, min(4, num_cores)))
-except Exception:
-    pass
-
 class Detection:
     def __init__(self, x1: float, y1: float, x2: float, y2: float, confidence: float, class_id: int, class_name: str):
         self.x1 = int(x1)
@@ -49,26 +41,41 @@ class Detection:
 
 class YOLODetector:
     """
-    High-Performance YOLO Detector with CPU multi-threading and optimized inference sizing.
+    High-Performance YOLO Detector optimized for Dense Protest Crowds on NVIDIA GPU.
     """
-    def __init__(self, model_name: str = "yolov8n.pt", conf_threshold: float = 0.22, imgsz: int = 640):
+    def __init__(self, model_name: str = "yolov8s.pt", conf_threshold: float = 0.05, imgsz: int = 1280):
         self.model_name = model_name
         self.conf_threshold = conf_threshold
         self.imgsz = imgsz
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model = None
         self._load_model()
 
     def _load_model(self):
         try:
             from ultralytics import YOLO
-            logger.info(f"Loading YOLO model: {self.model_name}...")
+            if torch.cuda.is_available():
+                gpu_name = torch.cuda.get_device_name(0)
+                print(f"[YOLODetector] 🚀 GPU Device Active: {gpu_name} (device={self.device})")
+            else:
+                num_cores = os.cpu_count() or 4
+                torch.set_num_threads(max(1, min(4, num_cores)))
+                print(f"[YOLODetector] Running on CPU (threads={torch.get_num_threads()})")
+
             self.model = YOLO(self.model_name)
-            logger.info("YOLO model loaded successfully.")
+            if self.device.startswith("cuda"):
+                self.model.to(self.device)
+                # CUDA Kernel Warmup for instant high FPS
+                dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
+                self.model(dummy_img, imgsz=640, device=self.device, verbose=False)
+                print(f"[YOLODetector] ✅ Model weights locked in GPU VRAM & CUDA warmed up.")
         except Exception as e:
             logger.warning(f"Could not load YOLO model {self.model_name} ({e}). Falling back to yolov8n.pt")
             try:
                 from ultralytics import YOLO
                 self.model = YOLO("yolov8n.pt")
+                if self.device.startswith("cuda"):
+                    self.model.to(self.device)
             except Exception:
                 self.model = None
 
@@ -80,12 +87,17 @@ class YOLODetector:
         
         if self.model is not None:
             try:
-                # Fast inference at 640 for high CPU throughput
+                h, w = frame.shape[:2]
+                target_imgsz = self.imgsz if (max(h, w) >= 900 and self.device.startswith("cuda")) else 640
+                
+                # High sensitivity detection with tuned IOU for dense crowds
                 results = self.model(
                     frame, 
                     conf=self.conf_threshold, 
+                    iou=0.55,  # Allows densely clustered/overlapping people to be detected
                     classes=[0] if person_only else None, 
-                    imgsz=self.imgsz,
+                    imgsz=target_imgsz,
+                    device=self.device,
                     verbose=False
                 )
                 
