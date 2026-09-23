@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered CCTV Surveillance Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-shield-halved logo-icon"></i>
+            <div>
+                <h1>SENTINEL-AI SURVEILLANCE</h1>
+                <p class="subtitle">Real-time YOLO + Deep SORT + Polygonal Safety Zones + Event Engine</p>
+            </div>
+        </div>
+        <div class="nav-controls">
+            <div class="status-pill" id="db-status-pill">
+                <span class="status-dot green"></span>
+                <span id="db-status-text">Database: Memory/MongoDB</span>
+            </div>
+            <div class="status-pill" id="ws-status-pill">
+                <span class="status-dot green"></span>
+                <span id="ws-status-text">WS: Connected</span>
+            </div>
+            <div class="clock-badge" id="system-clock">00:00:00</div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-layout">
+        <!-- Sidebar / Camera Switcher -->
+        <aside class="sidebar">
+            <div class="section-title">
+                <i class="fa-solid fa-video"></i> Active Cameras
+            </div>
+            <div id="camera-list" class="camera-list">
+                <!-- Dynamically populated camera buttons -->
+            </div>
+
+            <div class="section-title mt-4">
+                <i class="fa-solid fa-sliders"></i> Active Zones (<span id="active-cam-tag">CAM-01</span>)
+            </div>
+            <div id="zones-list" class="zones-container">
+                <!-- Dynamically populated zones -->
+            </div>
+
+            <div class="section-title mt-4">
+                <i class="fa-solid fa-chart-pie"></i> System Health
+            </div>
+            <div class="stat-card-compact">
+                <div class="stat-row">
+                    <span>Inference Model</span>
+                    <span class="badge badge-info">YOLOv8n</span>
+                </div>
+                <div class="stat-row">
+                    <span>Tracker</span>
+                    <span class="badge badge-info">Multi-Object Tracker</span>
+                </div>
+                <div class="stat-row">
+                    <span>Anti-Spam Cooldown</span>
+                    <span class="badge badge-warning">10.0s</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Feed & Analytics -->
+        <main class="content-area">
+            <!-- Top Telemetry KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card" id="kpi-people">
+                    <div class="kpi-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">People Detected</span>
+                        <h2 class="kpi-value" id="kpi-people-count">0</h2>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-crowd">
+                    <div class="kpi-icon green" id="crowd-icon-bg"><i class="fa-solid fa-gauge-high"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Crowd Density</span>
+                        <h2 class="kpi-value" id="kpi-crowd-status">NORMAL</h2>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-safety">
+                    <div class="kpi-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Safety Violations</span>
+                        <h2 class="kpi-value" id="kpi-violation-count">0</h2>
+                    </div>
+                </div>
+
+                <div class="kpi-card" id="kpi-fps">
+                    <div class="kpi-icon purple"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Stream FPS</span>
+                        <h2 class="kpi-value" id="kpi-fps-val">0.0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Stream Container -->
+            <div class="video-panel">
+                <div class="panel-header">
+                    <div class="flex-center gap-2">
+                        <span class="live-badge"><span class="pulsing-dot"></span> LIVE FEED</span>
+                        <span id="current-stream-title" class="stream-title">CAM-01 - Main Entrance</span>
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm" onclick="reloadStream()"><i class="fa-solid fa-rotate-right"></i> Refresh Feed</button>
+                    </div>
+                </div>
+                <div class="video-wrapper">
+                    <img id="main-video-stream" src="/api/video/feed/CAM-01" alt="Live CCTV Video Feed">
+                    <div class="video-watermark">SENTINEL-AI CCTV SECURE STREAM</div>
+                </div>
+            </div>
+
+            <!-- Event History Table -->
+            <div class="table-panel">
+                <div class="panel-header">
+                    <div class="flex-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span class="stream-title">Live Event History Log</span>
+                    </div>
+                    <div class="filter-group">
+                        <button class="filter-btn active" onclick="filterEvents('ALL')">All</button>
+                        <button class="filter-btn" onclick="filterEvents('OVERCROWDING')">Overcrowding</button>
+                        <button class="filter-btn" onclick="filterEvents('SAFETY_VIOLATION')">Safety</button>
+                        <button class="filter-btn" onclick="filterEvents('SUSPICIOUS_ACTIVITY')">Anomalies</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Camera</th>
+                                <th>Event Type</th>
+                                <th>Severity</th>
+                                <th>Details / Message</th>
+                                <th>Track IDs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-table-body">
+                            <!-- Dynamically populated event rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Alerts Feed Panel -->
+        <aside class="alerts-sidebar">
+            <div class="panel-header">
+                <div class="flex-center gap-2">
+                    <i class="fa-solid fa-bell text-warning"></i>
+                    <span class="stream-title">Real-time Alerts</span>
+                </div>
+                <span class="alert-counter" id="active-alert-counter">0</span>
+            </div>
+            
+            <div id="alerts-feed" class="alerts-feed">
+                <!-- Dynamically populated alert cards -->
+            </div>
+        </aside>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
