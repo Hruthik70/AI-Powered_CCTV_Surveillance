@@ -118,15 +118,20 @@ function renderActiveCameraTelemetry() {
     // Render Zones
     const zonesContainer = document.getElementById("zones-list");
     zonesContainer.innerHTML = "";
-    (cam.zones || []).forEach(z => {
-        const item = document.createElement("div");
-        item.className = `zone-item ${z.type}`;
-        item.innerHTML = `
-            <span><strong>${z.name}</strong></span>
-            <span class="badge ${z.type === 'RESTRICTED' ? 'badge-danger' : 'badge-warning'}">${z.type}</span>
-        `;
-        zonesContainer.appendChild(item);
-    });
+    const activeZones = cam.zones || [];
+    if (activeZones.length === 0) {
+        zonesContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 12px; padding: 8px 0; font-style: italic;">No active zones configured</div>`;
+    } else {
+        activeZones.forEach(z => {
+            const item = document.createElement("div");
+            item.className = `zone-item ${z.type}`;
+            item.innerHTML = `
+                <span><strong>${z.name}</strong></span>
+                <span class="badge ${z.type === 'RESTRICTED' ? 'badge-danger' : 'badge-warning'}">${z.type}</span>
+            `;
+            zonesContainer.appendChild(item);
+        });
+    }
 }
 
 // Polling for Alerts & Event History

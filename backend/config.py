@@ -30,20 +30,13 @@ class AppConfig:
     DEFAULT_CAMERAS: List[CameraConfig] = [
         CameraConfig(
             camera_id="CAM-01",
-            name="Synthetic Lobby & Zones",
+            name="Synthetic Lobby",
             location="Simulation Area",
             source="videos/crowd.mp4",
             crowd_threshold=12,
             crowd_warning_threshold=7,
             alert_cooldown_seconds=10.0,
-            zones=[
-                ZoneConfig(
-                    name="Restricted Zone Alpha",
-                    type="RESTRICTED",
-                    polygon=[[480, 80], [750, 80], [750, 320], [480, 320]],
-                    color=[0, 0, 255]
-                )
-            ]
+            zones=[]
         ),
         CameraConfig(
             camera_id="CAM-02",
@@ -63,6 +56,13 @@ class AppConfig:
             crowd_threshold=6,
             crowd_warning_threshold=4,
             alert_cooldown_seconds=10.0,
-            zones=[]
+            zones=[
+                ZoneConfig(
+                    name="Factory Restricted Area",
+                    type="RESTRICTED",
+                    polygon=[[1200, 520], [1820, 520], [1820, 980], [1200, 980]],
+                    color=[0, 0, 255]
+                )
+            ]
         )
     ]
