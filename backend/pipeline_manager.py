@@ -103,7 +103,7 @@ class CameraPipeline:
             cv2.putText(annotated, c_tag, (cx1 + 6, max(25, cy1 - 6)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 220, 255), 2)
 
-        # 3. Draw Tracked Pedestrians
+        # 3. Draw Tracked Pedestrians 
         for trk in tracks:
             x1, y1, x2, y2 = trk.bbox
             tid = trk.track_id
@@ -145,7 +145,7 @@ class CameraPipeline:
         cv2.putText(annotated, f"FPS: {self.video_processor.current_fps:.1f}", (w - 110, 26),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 200), 2)
 
-        # People Count & Crowd Badge
+        # People Count & Crowd 
         crowd_color = (0, 255, 0) if crowd_status == "NORMAL" else ((0, 200, 255) if crowd_status == "MODERATE" else (0, 0, 255))
         crowd_hud = f"PEOPLE: {person_count} [{crowd_status}]"
         cv2.putText(annotated, crowd_hud, (w // 2 - 90, 26),
